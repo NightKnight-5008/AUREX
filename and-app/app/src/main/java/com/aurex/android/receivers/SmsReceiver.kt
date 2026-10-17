@@ -10,11 +10,11 @@ import android.util.Log
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.aurex.android.AurexApplication
 import com.aurex.android.BuildConfig
 import com.aurex.android.database.SmsEntity
 import com.aurex.android.repository.SmsRepository
 import com.aurex.android.utils.EncryptionUtils
+import com.aurex.android.utils.PreferenceManager
 import com.aurex.android.utils.SecureLogger
 import com.aurex.android.utils.SmsPreprocessor
 import kotlinx.coroutines.CoroutineScope
@@ -48,8 +48,9 @@ class SmsReceiver : BroadcastReceiver() {
         val secureLogger = SecureLogger(context)
 
         // Get user info from preferences
-        val userId = AurexApplication.preferenceManager.getUserId()
-        val authToken = AurexApplication.preferenceManager.getAuthToken()
+        val preferenceManager = PreferenceManager(context)
+        val userId = preferenceManager.getUserId()
+        val authToken = preferenceManager.getAuthToken()
 
         if (userId == null || authToken == null) {
             Log.w(TAG, "User not logged in, SMS will not be stored")

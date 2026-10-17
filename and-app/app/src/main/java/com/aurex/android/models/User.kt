@@ -9,11 +9,11 @@ data class User(
     @SerializedName("email")
     val email: String,
 
-    @SerializedName("auth_token")
-    val authToken: String?,
-
     @SerializedName("created_at")
-    val createdAt: String?
+    val createdAt: String?,
+
+    @SerializedName("updated_at")
+    val updatedAt: String?
 )
 
 data class LoginRequest(
@@ -34,9 +34,9 @@ data class LoginResponse(
     @SerializedName("message")
     val message: String?,
 
-    @SerializedName("user")
-    val user: User?,
+    @SerializedName("token")
+    val token: String?,
 
-    @SerializedName("auth_token")
-    val authToken: String?
+    @SerializedName("user")
+    val user: User?
 )

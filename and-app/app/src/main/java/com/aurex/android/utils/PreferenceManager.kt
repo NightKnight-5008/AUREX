@@ -23,7 +23,7 @@ class PreferenceManager(context: Context) {
     )
 
     companion object {
-        // LEGACY (Deprecated - kept for migration)
+        // USER SESSION
         private const val KEY_USER_ID = "user_id"
         private const val KEY_EMAIL = "email"
         private const val KEY_AUTH_TOKEN = "auth_token"
@@ -39,6 +39,44 @@ class PreferenceManager(context: Context) {
         // MONITORING
         private const val KEY_LAST_SMS_FORWARDED = "last_sms_forwarded_at"
         private const val KEY_LAST_HEARTBEAT = "last_heartbeat_at"
+    }
+
+    // ==================== USER SESSION ====================
+
+    fun setUserId(userId: String) {
+        prefs.edit().putString(KEY_USER_ID, userId).apply()
+    }
+
+    fun getUserId(): String? = prefs.getString(KEY_USER_ID, null)
+
+    fun setAuthToken(authToken: String) {
+        prefs.edit().putString(KEY_AUTH_TOKEN, authToken).apply()
+    }
+
+    fun getAuthToken(): String? = prefs.getString(KEY_AUTH_TOKEN, null)
+
+    fun saveUserSession(userId: String, email: String, authToken: String) {
+        prefs.edit().apply {
+            putString(KEY_USER_ID, userId)
+            putString(KEY_EMAIL, email)
+            putString(KEY_AUTH_TOKEN, authToken)
+            putBoolean(KEY_IS_LOGGED_IN, true)
+            apply()
+        }
+    }
+
+    fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
+
+    fun isLoggedIn(): Boolean = prefs.getBoolean(KEY_IS_LOGGED_IN, false)
+
+    fun clearSession() {
+        prefs.edit().apply {
+            remove(KEY_USER_ID)
+            remove(KEY_EMAIL)
+            remove(KEY_AUTH_TOKEN)
+            remove(KEY_IS_LOGGED_IN)
+            apply()
+        }
     }
 
     // ==================== WORKSPACE BINDING ====================
@@ -105,35 +143,5 @@ class PreferenceManager(context: Context) {
     fun getLastHeartbeat(): Long? {
         val timestamp = prefs.getLong(KEY_LAST_HEARTBEAT, -1L)
         return if (timestamp == -1L) null else timestamp
-    }
-
-    // ==================== LEGACY (Deprecated) ====================
-
-    @Deprecated("Use workspace binding instead")
-    fun saveUserSession(userId: String, email: String, authToken: String) {
-        prefs.edit().apply {
-            putString(KEY_USER_ID, userId)
-            putString(KEY_EMAIL, email)
-            putString(KEY_AUTH_TOKEN, authToken)
-            putBoolean(KEY_IS_LOGGED_IN, true)
-            apply()
-        }
-    }
-
-    @Deprecated("Use workspace binding instead")
-    fun getUserId(): String? = prefs.getString(KEY_USER_ID, null)
-
-    @Deprecated("Use workspace binding instead")
-    fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
-
-    @Deprecated("Use workspace binding instead")
-    fun getAuthToken(): String? = prefs.getString(KEY_AUTH_TOKEN, null)
-
-    @Deprecated("Use workspace binding instead")
-    fun isLoggedIn(): Boolean = prefs.getBoolean(KEY_IS_LOGGED_IN, false)
-
-    @Deprecated("Use clearWorkspaceBinding instead")
-    fun clearSession() {
-        clearWorkspaceBinding()
     }
 }

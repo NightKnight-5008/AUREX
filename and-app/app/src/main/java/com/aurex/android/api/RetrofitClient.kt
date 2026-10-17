@@ -1,7 +1,6 @@
 package com.aurex.android.api
 
 import android.util.Log
-import okhttp3.CertificatePinner
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -13,39 +12,8 @@ object RetrofitClient {
 
     private const val TAG = "RetrofitClient"
 
-    // TODO: Update this with your actual backend URL
-    private const val BASE_URL = "https://api.aurex.com/"
-
-    /**
-     * Certificate Pins for api.aurex.com
-     *
-     * PRODUCTION DEPLOYMENT: Replace these placeholder pins with your actual backend certificate pins
-     *
-     * To generate real pins:
-     * 1. Get your backend certificate:
-     *    openssl s_client -connect api.aurex.com:443 -servername api.aurex.com < /dev/null \
-     *      | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
-     *      | openssl dgst -sha256 -binary | openssl enc -base64
-     *
-     * 2. Get backup pin (intermediate CA):
-     *    openssl s_client -connect api.aurex.com:443 -showcerts < /dev/null 2>/dev/null \
-     *      | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
-     *      | openssl dgst -sha256 -binary | openssl enc -base64
-     *
-     * Pin Format: sha256/[base64-encoded-hash]
-     */
-    private val CERTIFICATE_PINS = arrayOf(
-        "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", // Primary certificate pin (REPLACE)
-        "sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="  // Backup pin (REPLACE)
-    )
-
-    /**
-     * Certificate Pinner Configuration
-     * Prevents man-in-the-middle attacks by validating server certificates against known pins
-     */
-    private val certificatePinner = CertificatePinner.Builder()
-        .add("api.aurex.com", *CERTIFICATE_PINS)
-        .build()
+    // Local development backend
+    private const val BASE_URL = "http://localhost:3001/"
 
     /**
      * Metrics Interceptor
@@ -112,14 +80,13 @@ object RetrofitClient {
     }
 
     /**
-     * OkHttp Client with Security Hardening
-     * - Certificate pinning enabled
+     * OkHttp Client
      * - Metrics tracking
      * - Connection retry on failure
+     * - No certificate pinning (local dev)
      */
     private val okHttpClient = OkHttpClient.Builder()
-        .certificatePinner(certificatePinner) // ✅ Certificate pinning
-        .addInterceptor(metricsInterceptor)   // ✅ Metrics tracking
+        .addInterceptor(metricsInterceptor)   // Metrics tracking
         .addInterceptor(loggingInterceptor)   // HTTP logging
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
