@@ -1,0 +1,88 @@
+{
+  "name": "aurex-desktop",
+  "version": "2.0.0",
+  "description": "AUREX Financial Operating System - Windows Desktop Application",
+  "main": "desktop/main.js",
+  "author": "AUREX Team",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev:vite": "vite --mode desktop",
+    "dev:electron": "wait-on http://localhost:5173 && electron .",
+    "build": "npm run build:vite && npm run build:electron",
+    "build:vite": "vite build --mode desktop",
+    "build:electron": "tsc -p desktop/tsconfig.json",
+    "package": "npm run build && electron-builder",
+    "package:win": "npm run build && electron-builder --win --x64",
+    "dist": "npm run build && electron-builder --win --x64 --publish never",
+    "release": "npm run build && electron-builder --win --x64 --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.7",
+    "electron-log": "^5.0.1",
+    "better-sqlite3": "^9.2.2",
+    "node-forge": "^1.3.1",
+    "node-machine-id": "^1.1.12"
+  },
+  "optionalDependencies": {
+    "dpapi-addon": "^1.0.0"
+  },
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node-forge": "^1.3.10"
+  },
+  "build": {
+    "appId": "com.aurex.desktop",
+    "productName": "AUREX Financial OS",
+    "copyright": "Copyright © 2026 AUREX Team",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "desktop/assets/icon.ico",
+      "sign": "./desktop/scripts/sign.js",
+      "publisherName": "AUREX Technologies Inc."
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AUREX"
+    },
+    "directories": {
+      "buildResources": "desktop/assets",
+      "output": "dist-desktop"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/main.js",
+      "desktop/preload.js",
+      "desktop/lib/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "desktop/assets",
+        "to": "assets"
+      }
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "aurex",
+      "repo": "aurex-desktop"
+    }
+  }
+}

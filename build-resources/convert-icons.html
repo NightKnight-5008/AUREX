@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUREX Icon Converter</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .icon-preview {
+            display: flex;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .preview-item {
+            text-align: center;
+        }
+        .preview-item canvas {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .preview-item p {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .instructions {
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #1e3a8a;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 8px 0;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 AUREX Icon Converter</h1>
+        <p class="subtitle">Convert SVG icons to PNG format for the desktop application</p>
+
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Open this HTML file in a web browser</li>
+                <li>The SVG icons will be loaded and converted to PNG automatically</li>
+                <li>Click the download buttons below to save each PNG file</li>
+                <li>Place the downloaded files in the <code>build-resources/</code> directory</li>
+            </ol>
+        </div>
+
+        <div class="icon-preview">
+            <div class="preview-item">
+                <canvas id="iconCanvas" width="512" height="512"></canvas>
+                <p><strong>icon.png</strong><br>512x512 (Linux)</p>
+                <button id="downloadIcon">Download icon.png</button>
+            </div>
+            <div class="preview-item">
+                <canvas id="trayCanvas" width="64" height="64"></canvas>
+                <p><strong>tray-icon.png</strong><br>64x64 (System Tray)</p>
+                <button id="downloadTray">Download tray-icon.png</button>
+            </div>
+        </div>
+
+        <div class="icon-preview">
+            <div class="preview-item">
+                <canvas id="icon256Canvas" width="256" height="256"></canvas>
+                <p><strong>icon-256.png</strong><br>256x256 (Windows)</p>
+                <button id="download256">Download icon-256.png</button>
+            </div>
+            <div class="preview-item">
+                <canvas id="icon1024Canvas" width="256" height="256" style="width: 256px; height: 256px;"></canvas>
+                <p><strong>icon-1024.png</strong><br>1024x1024 (macOS)</p>
+                <button id="download1024">Download icon-1024.png</button>
+            </div>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="instructions" style="margin-top: 30px;">
+            <h3>Next Steps:</h3>
+            <ol>
+                <li>Download all four PNG files using the buttons above</li>
+                <li>Place them in the <code>build-resources/</code> directory</li>
+                <li>electron-builder will automatically generate <code>icon.ico</code> and <code>icon.icns</code> from these PNGs</li>
+                <li>Test by running: <code>npm run desktop:package</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // SVG content embedded directly
+        const iconSvg = `<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="180" fill="url(#bgGradient)"/>
+  <g transform="translate(512, 512)">
+    <path d="M -180 200 L 0 -200 L 180 200 L 120 200 L 0 -60 L -120 200 Z" fill="url(#accentGradient)" stroke="#ffffff" stroke-width="8"/>
+    <rect x="-90" y="20" width="180" height="30" fill="#ffffff" rx="5"/>
+    <g opacity="0.9">
+      <polyline points="-140,80 -80,40 -20,60 20,20 80,50 140,10" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="-140" cy="80" r="8" fill="#ffffff"/>
+      <circle cx="-80" cy="40" r="8" fill="#ffffff"/>
+      <circle cx="-20" cy="60" r="8" fill="#ffffff"/>
+      <circle cx="20" cy="20" r="8" fill="#ffffff"/>
+      <circle cx="80" cy="50" r="8" fill="#ffffff"/>
+      <circle cx="140" cy="10" r="8" fill="#ffffff"/>
+    </g>
+  </g>
+  <text x="512" y="880" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#ffffff" text-anchor="middle">AUREX</text>
+</svg>`;
+
+        const traySvg = `<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="trayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#trayGradient)"/>
+  <g transform="translate(32, 32)">
+    <path d="M -12 15 L 0 -15 L 12 15 L 8 15 L 0 -5 L -8 15 Z" fill="#ffffff"/>
+    <rect x="-6" y="2" width="12" height="3" fill="#fbbf24" rx="1"/>
+  </g>
+</svg>`;
+
+        function loadSvgToCanvas(svgString, canvas, callback) {
+            const img = new Image();
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            img.onload = function() {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+                if (callback) callback();
+            };
+            
+            img.onerror = function() {
+                showStatus('Error loading SVG', 'error');
+            };
+            
+            img.src = url;
+        }
+
+        function downloadCanvas(canvas, filename) {
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showStatus(`Downloaded ${filename}`, 'success');
+            });
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // Load icons on page load
+        window.addEventListener('load', function() {
+            const iconCanvas = document.getElementById('iconCanvas');
+            const trayCanvas = document.getElementById('trayCanvas');
+            const icon256Canvas = document.getElementById('icon256Canvas');
+            const icon1024Canvas = document.getElementById('icon1024Canvas');
+
+            // Set actual canvas size for 1024x1024 (displayed smaller)
+            icon1024Canvas.width = 1024;
+            icon1024Canvas.height = 1024;
+
+            loadSvgToCanvas(iconSvg, iconCanvas);
+            loadSvgToCanvas(traySvg, trayCanvas);
+            loadSvgToCanvas(iconSvg, icon256Canvas);
+            loadSvgToCanvas(iconSvg, icon1024Canvas);
+
+            // Setup download buttons
+            document.getElementById('downloadIcon').addEventListener('click', function() {
+                downloadCanvas(iconCanvas, 'icon.png');
+            });
+
+            document.getElementById('downloadTray').addEventListener('click', function() {
+                downloadCanvas(trayCanvas, 'tray-icon.png');
+            });
+
+            document.getElementById('download256').addEventListener('click', function() {
+                downloadCanvas(icon256Canvas, 'icon-256.png');
+            });
+
+            document.getElementById('download1024').addEventListener('click', function() {
+                downloadCanvas(icon1024Canvas, 'icon-1024.png');
+            });
+
+            showStatus('Icons loaded successfully! Click download buttons to save.', 'success');
+        });
+    </script>
+</body>
+</html>

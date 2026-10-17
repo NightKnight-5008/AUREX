@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Aurex</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">Welcome to Aurex</string>
+    <string name="login_subtitle">Sign in to manage your SMS data</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="security_key_hint">24-Character Security Key</string>
+    <string name="login_button">Sign In</string>
+    <string name="login_error">Invalid credentials. Please try again.</string>
+    <string name="login_network_error">Network error. Please check your connection.</string>
+
+    <!-- Main Screen -->
+    <string name="main_title">SMS Manager</string>
+    <string name="semi_accounts">Semi-Accounts</string>
+    <string name="sms_logs">SMS Logs</string>
+    <string name="settings">Settings</string>
+    <string name="logout">Logout</string>
+    <string name="sync_now">Sync Now</string>
+
+    <!-- Semi-Account Management -->
+    <string name="semi_account_management">Semi-Account Management</string>
+    <string name="create_semi_account">Create Semi-Account</string>
+    <string name="semi_account_name_hint">Semi-Account Name</string>
+    <string name="phone_number_hint">Phone Number (SIM)</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="semi_account_created">Semi-account created successfully</string>
+    <string name="semi_account_updated">Semi-account updated successfully</string>
+    <string name="semi_account_deleted">Semi-account deleted successfully</string>
+    <string name="semi_account_error">Error managing semi-account</string>
+    <string name="no_semi_accounts">No semi-accounts yet</string>
+    <string name="create_first_semi_account">Create your first semi-account to start organizing SMS data</string>
+
+    <!-- SMS Logs -->
+    <string name="no_sms_logs">No SMS messages</string>
+    <string name="sms_synced">SMS synced successfully</string>
+    <string name="sms_sync_error">Error syncing SMS</string>
+    <string name="pending_sync">Pending sync: %d messages</string>
+
+    <!-- Permissions -->
+    <string name="permission_required">Permission Required</string>
+    <string name="sms_permission_rationale">This app needs SMS permission to read and sync your messages.</string>
+    <string name="phone_permission_rationale">This app needs phone permission to identify your device.</string>
+    <string name="grant_permission">Grant Permission</string>
+
+    <!-- General -->
+    <string name="ok">OK</string>
+    <string name="error">Error</string>
+    <string name="loading">Loading…</string>
+    <string name="retry">Retry</string>
+</resources>

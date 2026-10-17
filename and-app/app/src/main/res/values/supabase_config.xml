@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Supabase Configuration -->
+    <string name="supabase_url">https://kcddivyenvzuiidcrgax.supabase.co</string>
+    <string name="supabase_anon_key">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjZGRpdnllbnZ6dWlpZGNyZ2F4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTc2MDksImV4cCI6MjA5MDAzMzYwOX0.6mIcCaDPdM3nowRpykyruPmdyEMOdGddDry_DjxvsLw</string>
+    
+    <!-- API Endpoints -->
+    <string name="api_base_url">https://kcddivyenvzuiidcrgax.supabase.co/rest/v1</string>
+    <string name="api_auth_url">https://kcddivyenvzuiidcrgax.supabase.co/auth/v1</string>
+</resources>

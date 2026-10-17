@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Base Colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Modern Gradient Color Palette -->
+    <color name="primary">#667eea</color>
+    <color name="primary_dark">#5a67d8</color>
+    <color name="primary_light">#7c3aed</color>
+    <color name="secondary">#f093fb</color>
+    <color name="secondary_dark">#e879f9</color>
+    <color name="accent">#4facfe</color>
+    <color name="accent_dark">#3b82f6</color>
+
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#667eea</color>
+    <color name="gradient_middle">#764ba2</color>
+    <color name="gradient_end">#f093fb</color>
+
+    <!-- Background Colors -->
+    <color name="background">#f8fafc</color>
+    <color name="background_card">#FFFFFF</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#f1f5f9</color>
+
+    <!-- Status Colors -->
+    <color name="success">#10b981</color>
+    <color name="error">#ef4444</color>
+    <color name="warning">#f59e0b</color>
+    <color name="info">#3b82f6</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#1e293b</color>
+    <color name="text_secondary">#64748b</color>
+    <color name="text_tertiary">#94a3b8</color>
+    <color name="text_on_primary">#FFFFFF</color>
+
+    <!-- UI Element Colors -->
+    <color name="divider">#e2e8f0</color>
+    <color name="border">#cbd5e1</color>
+    <color name="shadow">#1a1e293b</color>
+
+    <!-- Semi-transparent overlays -->
+    <color name="scrim">#60000000</color>
+    <color name="overlay_light">#10000000</color>
+</resources>

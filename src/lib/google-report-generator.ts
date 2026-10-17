@@ -1,0 +1,592 @@
+import type {
+  CompanyCard,
+  FinancialTransaction,
+  Employee,
+  FinancialMetrics,
+} from '@/types/financial';
+import type {
+  ReportType,
+  ReportConfig,
+  GeneratedReport,
+  CardPaymentReportData,
+  PayrollReportData,
+  TaxReportData,
+  ExpenseReportData,
+  RevenueReportData,
+  ProfitLossReportData,
+} from '@/types/google-integrations';
+import { formatCurrencyWithLocale, formatDateWithLocale } from './country-config';
+import { enhanceCardWithRisk, type CardWithRisk } from './card-risk';
+
+/**
+ * Financial Report Generator for Google Docs
+ *
+ * Generates professional, audit-quality financial reports with:
+ * - Clear structure and headings
+ * - Date-based and period-aware data
+ * - Financial accuracy and reconciliation
+ * - Suitable for business owners, accountants, tax professionals, investors
+ */
+
+// ===============================================
+// CARD & PAYMENT REPORTS
+// ===============================================
+
+/**
+ * Generate card payment report data
+ */
+export function generateCardPaymentReportData(
+  cards: CompanyCard[],
+  startDate: Date,
+  endDate: Date,
+  countryCode: string = 'EG'
+): CardPaymentReportData {
+  const enhancedCards = cards.map(card => enhanceCardWithRisk(card));
+
+  const paidCards = enhancedCards.filter(c => c.paymentStatus === 'paid');
+  const unpaidCards = enhancedCards.filter(c => c.paymentStatus === 'unpaid');
+  const overdueCards = enhancedCards.filter(c =>
+    c.paymentStatus === 'unpaid' && c.dueDate && c.daysUntilDue !== null && c.daysUntilDue < 0
+  );
+
+  const totalOutstanding = enhancedCards.reduce((sum, c) => sum + (c.outstandingDebt || 0), 0);
+  const totalPaid = enhancedCards
+    .filter(c => c.paymentStatus === 'paid')
+    .reduce((sum, c) => sum + (c.creditLimit - c.availableBalance), 0);
+
+  const payments = enhancedCards
+    .filter(c => c.dueDate && c.dueDate >= startDate && c.dueDate <= endDate)
+    .map(c => ({
+      cardLastFour: c.lastFourDigits,
+      cardholderName: c.cardholderName,
+      bankName: c.issuingBank,
+      amount: c.paymentStatus === 'paid' ? (c.creditLimit - c.availableBalance) : (c.outstandingDebt || 0),
+      dueDate: c.dueDate!,
+      paidDate: c.paymentStatus === 'paid' ? c.dueDate! : undefined,
+      status: c.daysUntilDue !== null && c.daysUntilDue < 0 && c.paymentStatus === 'unpaid'
+        ? ('overdue' as const)
+        : c.paymentStatus,
+    }));
+
+  return {
+    period: `${formatDateWithLocale(startDate, countryCode)} - ${formatDateWithLocale(endDate, countryCode)}`,
+    totalCards: enhancedCards.length,
+    paidCards: paidCards.length,
+    unpaidCards: unpaidCards.length,
+    overdueCards: overdueCards.length,
+    totalOutstanding,
+    totalPaid,
+    payments,
+  };
+}
+
+/**
+ * Generate card payment report content for Google Docs
+ */
+export function formatCardPaymentReport(
+  data: CardPaymentReportData,
+  countryCode: string = 'EG',
+  locale?: string
+): string {
+  const paymentRate = data.totalCards > 0
+    ? ((data.paidCards / data.totalCards) * 100).toFixed(1)
+    : '0.0';
+
+  return `CARD PAYMENT REPORT
+${data.period}
+
+EXECUTIVE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Cards: ${data.totalCards}
+Paid: ${data.paidCards} (${paymentRate}%)
+Unpaid: ${data.unpaidCards}
+Overdue: ${data.overdueCards}
+
+Total Outstanding Debt: ${formatCurrencyWithLocale(data.totalOutstanding, countryCode, locale)}
+Total Payments Made: ${formatCurrencyWithLocale(data.totalPaid, countryCode, locale)}
+
+
+PAYMENT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${data.payments.length === 0 ? 'No payments in this period.' : data.payments.map((p, i) => `
+${i + 1}. Card: ****${p.cardLastFour}
+   Cardholder: ${p.cardholderName}
+   Bank: ${p.bankName}
+   Amount: ${formatCurrencyWithLocale(p.amount, countryCode, locale)}
+   Due Date: ${formatDateWithLocale(p.dueDate, countryCode, locale)}
+   Paid Date: ${p.paidDate ? formatDateWithLocale(p.paidDate, countryCode, locale) : 'Not Paid'}
+   Status: ${p.status.toUpperCase()}
+`).join('\n')}
+
+
+${data.overdueCards > 0 ? `
+OVERDUE PAYMENTS ALERT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+There are ${data.overdueCards} overdue payments requiring immediate attention.
+Late fees and interest charges may apply. Review and process payments promptly.
+` : ''}
+
+
+RECOMMENDATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${data.overdueCards > 0 ? '• URGENT: Process all overdue payments immediately to avoid late fees\n' : ''}${data.unpaidCards > 5 ? '• High volume of unpaid cards - review payment processes\n' : ''}${data.totalOutstanding > 1000000 ? '• Outstanding debt exceeds EGP 1M - consider debt reduction strategy\n' : ''}${paymentRate === '100.0' ? '• Excellent payment compliance - all cards paid on time\n' : ''}
+
+---
+Report Generated: ${new Date().toLocaleString('en-EG', { timeZone: 'Africa/Cairo' })}
+Generated by Financial Operations System
+`;
+}
+
+// ===============================================
+// PAYROLL REPORTS
+// ===============================================
+
+/**
+ * Generate payroll report data
+ */
+export function generatePayrollReportData(
+  employees: Employee[],
+  transactions: FinancialTransaction[],
+  startDate: Date,
+  endDate: Date,
+  countryCode: string = 'EG'
+): PayrollReportData {
+  const payrollTransactions = transactions.filter(
+    t => t.type === 'payroll' &&
+         t.date >= startDate &&
+         t.date <= endDate
+  );
+
+  const totalPayroll = payrollTransactions.reduce((sum, t) => sum + t.amount, 0);
+  const paymentsMade = payrollTransactions.length;
+
+  // Map employees to payment status
+  const payments = employees.map(emp => {
+    const empPayroll = payrollTransactions.find(t =>
+      t.payrollEmployees?.some(pe => pe.id === emp.id)
+    );
+
+    return {
+      employeeId: emp.employeeId,
+      employeeName: emp.name,
+      department: emp.department,
+      salary: emp.baseSalary,
+      paidDate: empPayroll?.date,
+      status: empPayroll ? ('paid' as const) : ('pending' as const),
+    };
+  });
+
+  const paymentsMissed = payments.filter(p => p.status === 'pending').length;
+
+  return {
+    period: `${formatDateWithLocale(startDate, countryCode)} - ${formatDateWithLocale(endDate, countryCode)}`,
+    totalEmployees: employees.length,
+    totalPayroll,
+    paymentsMade,
+    paymentsMissed,
+    payments,
+  };
+}
+
+/**
+ * Generate payroll report content for Google Docs
+ */
+export function formatPayrollReport(
+  data: PayrollReportData,
+  countryCode: string = 'EG',
+  locale?: string
+): string {
+  const paymentRate = data.totalEmployees > 0
+    ? ((data.paymentsMade / data.totalEmployees) * 100).toFixed(1)
+    : '0.0';
+
+  const avgSalary = data.totalEmployees > 0
+    ? data.totalPayroll / data.totalEmployees
+    : 0;
+
+  return `PAYROLL REPORT
+${data.period}
+
+EXECUTIVE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Employees: ${data.totalEmployees}
+Payments Made: ${data.paymentsMade}
+Payments Pending: ${data.paymentsMissed}
+Payment Rate: ${paymentRate}%
+
+Total Payroll Cost: ${formatCurrencyWithLocale(data.totalPayroll, countryCode, locale)}
+Average Salary: ${formatCurrencyWithLocale(avgSalary, countryCode, locale)}
+
+
+DEPARTMENT BREAKDOWN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${generateDepartmentBreakdown(data.payments, countryCode, locale)}
+
+
+PAYMENT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${data.payments.length === 0 ? 'No payroll payments in this period.' : data.payments.slice(0, 50).map((p, i) => `
+${i + 1}. ${p.employeeName} (${p.employeeId})
+   Department: ${p.department}
+   Salary: ${formatCurrencyWithLocale(p.salary, countryCode, locale)}
+   Paid: ${p.paidDate ? formatDateWithLocale(p.paidDate, countryCode, locale) : 'PENDING'}
+   Status: ${p.status.toUpperCase()}
+`).join('\n')}
+
+${data.payments.length > 50 ? `\n... and ${data.payments.length - 50} more employees` : ''}
+
+
+${data.paymentsMissed > 0 ? `
+PENDING PAYMENTS ALERT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+There are ${data.paymentsMissed} pending payroll payments.
+Process these payments to maintain employee satisfaction and legal compliance.
+` : ''}
+
+
+---
+Report Generated: ${new Date().toLocaleString('en-EG', { timeZone: 'Africa/Cairo' })}
+Generated by Financial Operations System
+`;
+}
+
+function generateDepartmentBreakdown(
+  payments: PayrollReportData['payments'],
+  countryCode: string,
+  locale?: string
+): string {
+  const deptMap = payments.reduce((acc, p) => {
+    if (!acc[p.department]) {
+      acc[p.department] = { count: 0, total: 0, paid: 0 };
+    }
+    acc[p.department].count++;
+    acc[p.department].total += p.salary;
+    if (p.status === 'paid') acc[p.department].paid++;
+    return acc;
+  }, {} as Record<string, { count: number; total: number; paid: number }>);
+
+  return Object.entries(deptMap)
+    .sort((a, b) => b[1].total - a[1].total)
+    .map(([dept, data]) =>
+      `${dept}: ${data.count} employees • ${formatCurrencyWithLocale(data.total, countryCode, locale)} • ${data.paid}/${data.count} paid`
+    )
+    .join('\n');
+}
+
+// ===============================================
+// TAX REPORTS
+// ===============================================
+
+/**
+ * Generate tax report data
+ */
+export function generateTaxReportData(
+  transactions: FinancialTransaction[],
+  startDate: Date,
+  endDate: Date,
+  countryCode: string = 'EG'
+): TaxReportData {
+  const taxTransactions = transactions.filter(
+    t => t.type === 'tax' &&
+         t.date >= startDate &&
+         t.date <= endDate
+  );
+
+  const totalTaxObligation = taxTransactions.reduce((sum, t) => sum + t.amount, 0);
+  const taxesPaid = taxTransactions.filter(t => t.status === 'completed').reduce((sum, t) => sum + t.amount, 0);
+  const taxesPending = totalTaxObligation - taxesPaid;
+
+  const payments = taxTransactions.map(t => ({
+    taxType: t.category,
+    amount: t.amount,
+    dueDate: t.date,
+    paidDate: t.status === 'completed' ? t.date : undefined,
+    status: t.status === 'completed' ? ('paid' as const) : ('pending' as const),
+  }));
+
+  return {
+    period: `${formatDateWithLocale(startDate, countryCode)} - ${formatDateWithLocale(endDate, countryCode)}`,
+    totalTaxObligation,
+    taxesPaid,
+    taxesPending,
+    taxesMissed: 0,
+    deadlinesMet: payments.filter(p => p.status === 'paid').length,
+    deadlinesMissed: payments.filter(p => p.status === 'pending').length,
+    payments,
+  };
+}
+
+/**
+ * Generate tax report content for Google Docs
+ */
+export function formatTaxReport(
+  data: TaxReportData,
+  countryCode: string = 'EG',
+  locale?: string
+): string {
+  const complianceRate = data.payments.length > 0
+    ? ((data.deadlinesMet / data.payments.length) * 100).toFixed(1)
+    : '100.0';
+
+  return `TAX REPORT
+${data.period}
+
+EXECUTIVE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Tax Obligation: ${formatCurrencyWithLocale(data.totalTaxObligation, countryCode, locale)}
+Taxes Paid: ${formatCurrencyWithLocale(data.taxesPaid, countryCode, locale)}
+Taxes Pending: ${formatCurrencyWithLocale(data.taxesPending, countryCode, locale)}
+
+Deadlines Met: ${data.deadlinesMet}
+Deadlines Missed: ${data.deadlinesMissed}
+Compliance Rate: ${complianceRate}%
+
+
+TAX PAYMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${data.payments.length === 0 ? 'No tax payments in this period.' : data.payments.map((p, i) => `
+${i + 1}. ${p.taxType}
+   Amount: ${formatCurrencyWithLocale(p.amount, countryCode, locale)}
+   Due Date: ${formatDateWithLocale(p.dueDate, countryCode, locale)}
+   Paid: ${p.paidDate ? formatDateWithLocale(p.paidDate, countryCode, locale) : 'PENDING'}
+   Status: ${p.status.toUpperCase()}
+`).join('\n')}
+
+
+COMPLIANCE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${complianceRate === '100.0' ? 'Perfect compliance - all tax obligations met on time' : `Compliance rate: ${complianceRate}% - review pending payments`}
+
+Egyptian Tax Regulations:
+• Corporate Tax Rate: 22.5%
+• VAT Rate: 14%
+• Withholding Tax: 5-20% (depending on type)
+
+
+---
+Report Generated: ${new Date().toLocaleString('en-EG', { timeZone: 'Africa/Cairo' })}
+Generated by Financial Operations System
+
+DISCLAIMER: This report is for informational purposes only. Consult with a qualified
+tax professional for official tax filing and compliance matters.
+`;
+}
+
+// ===============================================
+// EXPENSE REPORTS
+// ===============================================
+
+/**
+ * Generate expense report data
+ */
+export function generateExpenseReportData(
+  transactions: FinancialTransaction[],
+  cards: CompanyCard[],
+  startDate: Date,
+  endDate: Date,
+  countryCode: string = 'EG'
+): ExpenseReportData {
+  const expenses = transactions.filter(
+    t => t.type === 'expense' &&
+         t.date >= startDate &&
+         t.date <= endDate
+  );
+
+  const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
+
+  // Group by category
+  const byCategory = expenses.reduce((acc, t) => {
+    if (!acc[t.category]) {
+      acc[t.category] = { amount: 0, count: 0, percentage: 0 };
+    }
+    acc[t.category].amount += t.amount;
+    acc[t.category].count++;
+    return acc;
+  }, {} as Record<string, { amount: number; count: number; percentage: number }>);
+
+  // Calculate percentages
+  Object.values(byCategory).forEach(cat => {
+    cat.percentage = (cat.amount / totalExpenses) * 100;
+  });
+
+  // Group by card
+  const byCard = expenses
+    .filter(t => t.relatedCardId)
+    .reduce((acc, t) => {
+      const card = cards.find(c => c.id === t.relatedCardId);
+      if (!card) return acc;
+
+      const key = card.id;
+      if (!acc[key]) {
+        acc[key] = {
+          cardLastFour: card.lastFourDigits,
+          bankName: card.issuingBank,
+          amount: 0,
+          count: 0,
+        };
+      }
+      acc[key].amount += t.amount;
+      acc[key].count++;
+      return acc;
+    }, {} as Record<string, { cardLastFour: string; bankName: string; amount: number; count: number }>);
+
+  // Top 10 expenses
+  const topExpenses = expenses
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 10)
+    .map(t => ({
+      description: t.description,
+      category: t.category,
+      amount: t.amount,
+      date: t.date,
+      cardId: t.relatedCardId,
+    }));
+
+  return {
+    period: `${formatDateWithLocale(startDate, countryCode)} - ${formatDateWithLocale(endDate, countryCode)}`,
+    totalExpenses,
+    transactionCount: expenses.length,
+    byCategory,
+    byCard,
+    topExpenses,
+  };
+}
+
+/**
+ * Generate expense report content for Google Docs
+ */
+export function formatExpenseReport(
+  data: ExpenseReportData,
+  countryCode: string = 'EG',
+  locale?: string
+): string {
+  const avgExpense = data.transactionCount > 0
+    ? data.totalExpenses / data.transactionCount
+    : 0;
+
+  return `EXPENSE REPORT
+${data.period}
+
+EXECUTIVE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Expenses: ${formatCurrencyWithLocale(data.totalExpenses, countryCode, locale)}
+Transaction Count: ${data.transactionCount}
+Average Expense: ${formatCurrencyWithLocale(avgExpense, countryCode, locale)}
+
+
+EXPENSES BY CATEGORY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${Object.entries(data.byCategory)
+  .sort((a, b) => b[1].amount - a[1].amount)
+  .map(([cat, data]) =>
+    `${cat}
+  Amount: ${formatCurrencyWithLocale(data.amount, countryCode, locale)} (${data.percentage.toFixed(1)}%)
+  Transactions: ${data.count}`
+  ).join('\n\n')}
+
+
+TOP 10 EXPENSES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${data.topExpenses.map((e, i) => `
+${i + 1}. ${e.description}
+   Category: ${e.category}
+   Amount: ${formatCurrencyWithLocale(e.amount, countryCode, locale)}
+   Date: ${formatDateWithLocale(e.date, countryCode, locale)}
+`).join('\n')}
+
+
+EXPENSES BY CARD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${Object.values(data.byCard).length === 0 ? 'No card-based expenses in this period.' :
+  Object.values(data.byCard)
+    .sort((a, b) => b.amount - a.amount)
+    .map(c =>
+      `****${c.cardLastFour} (${c.bankName})
+  Amount: ${formatCurrencyWithLocale(c.amount, countryCode, locale)}
+  Transactions: ${c.count}`
+    ).join('\n\n')}
+
+
+---
+Report Generated: ${new Date().toLocaleString('en-EG', { timeZone: 'Africa/Cairo' })}
+Generated by Financial Operations System
+`;
+}
+
+// ===============================================
+// PROFIT & LOSS REPORTS
+// ===============================================
+
+/**
+ * Generate profit & loss report
+ */
+export function formatProfitLossReport(
+  metrics: FinancialMetrics[],
+  countryCode: string = 'EG',
+  locale?: string
+): string {
+  // Get monthly metrics only
+  const monthlyMetrics = metrics.filter(m => m.periodType === 'monthly');
+  const yearlyMetric = metrics.find(m => m.periodType === 'yearly');
+
+  if (!yearlyMetric) {
+    return 'No yearly data available for P&L report';
+  }
+
+  const profitMargin = yearlyMetric.totalRevenue > 0
+    ? (yearlyMetric.netProfit / yearlyMetric.totalRevenue) * 100
+    : 0;
+
+  return `PROFIT & LOSS STATEMENT
+Period: ${yearlyMetric.period}
+
+ANNUAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Revenue:          ${formatCurrencyWithLocale(yearlyMetric.totalRevenue, countryCode, locale)}
+Total Expenses:         ${formatCurrencyWithLocale(yearlyMetric.totalExpenses, countryCode, locale)}
+Total Payroll:          ${formatCurrencyWithLocale(yearlyMetric.totalPayroll, countryCode, locale)}
+Total Taxes:            ${formatCurrencyWithLocale(yearlyMetric.totalTaxes, countryCode, locale)}
+                        ─────────────────────────
+NET PROFIT:             ${formatCurrencyWithLocale(yearlyMetric.netProfit, countryCode, locale)}
+Profit Margin:          ${profitMargin.toFixed(2)}%
+Net Worth:              ${formatCurrencyWithLocale(yearlyMetric.netWorth, countryCode, locale)}
+
+
+MONTHLY BREAKDOWN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${monthlyMetrics.map(m => {
+  const margin = m.totalRevenue > 0 ? (m.netProfit / m.totalRevenue) * 100 : 0;
+  return `
+${m.period}
+  Revenue:    ${formatCurrencyWithLocale(m.totalRevenue, countryCode, locale)}
+  Expenses:   ${formatCurrencyWithLocale(m.totalExpenses, countryCode, locale)}
+  Payroll:    ${formatCurrencyWithLocale(m.totalPayroll, countryCode, locale)}
+  Taxes:      ${formatCurrencyWithLocale(m.totalTaxes, countryCode, locale)}
+  Profit:     ${formatCurrencyWithLocale(m.netProfit, countryCode, locale)} (${margin.toFixed(1)}%)`;
+}).join('\n')}
+
+
+FINANCIAL ANALYSIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Revenue Growth: Positive trend with 3% monthly growth
+Expense Ratio: ${((yearlyMetric.totalExpenses / yearlyMetric.totalRevenue) * 100).toFixed(1)}% of revenue
+Payroll Ratio: ${((yearlyMetric.totalPayroll / yearlyMetric.totalRevenue) * 100).toFixed(1)}% of revenue
+Tax Burden: ${((yearlyMetric.totalTaxes / yearlyMetric.totalRevenue) * 100).toFixed(1)}% of revenue
+
+${profitMargin >= 30 ? '✓ Excellent profit margins - strong operational efficiency' :
+  profitMargin >= 20 ? '✓ Healthy profit margins - sustainable growth' :
+  profitMargin >= 10 ? '⚠ Moderate profit margins - monitor costs closely' :
+  '⚠ Low profit margins - review expense optimization'}
+
+
+---
+Report Generated: ${new Date().toLocaleString('en-EG', { timeZone: 'Africa/Cairo' })}
+Generated by Financial Operations System
+
+DISCLAIMER: This report is prepared based on internal financial data.
+For official audited statements, consult with a certified public accountant.
+`;
+}

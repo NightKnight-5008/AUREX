@@ -1,0 +1,44 @@
+# Build Resources Directory
+
+This directory contains application icons and assets for Electron builds:
+
+- `icon.ico` - Windows application icon (256x256 or larger)
+- `icon.icns` - macOS application icon (512x512 or larger)
+- `icon.png` - Linux application icon (512x512 or larger)
+- `entitlements.mac.plist` - macOS entitlements for code signing
+
+## Icon Requirements
+
+### Windows (.ico)
+- Format: ICO file with multiple sizes embedded
+- Recommended sizes: 16x16, 32x32, 48x48, 64x64, 128x128, 256x256
+- Tool: Use online converters or ImageMagick
+
+### macOS (.icns)
+- Format: ICNS file with multiple sizes embedded
+- Recommended sizes: 16x16, 32x32, 128x128, 256x256, 512x512, 1024x1024
+- Tool: Use `iconutil` on macOS or online converters
+
+### Linux (.png)
+- Format: PNG file
+- Size: 512x512 pixels
+- Transparency: Supported
+
+## Creating Icons
+
+You can create icons from a single high-resolution PNG (1024x1024) using:
+
+```bash
+# macOS
+iconutil -c icns icon.iconset
+
+# Windows (using ImageMagick)
+convert icon.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
+
+# Linux
+cp icon-512.png icon.png
+```
+
+## Placeholder
+
+Until actual icons are provided, electron-builder will use default Electron icons.

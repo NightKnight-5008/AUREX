@@ -1,0 +1,142 @@
+# Dependencies
+node_modules/
+and-app/.gradle/
+and-app/build/
+and-app/local.properties
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+backend/dist/
+release/
+*.tsbuildinfo
+*.tsbuildinfo.map
+
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.*.local
+backend/.env
+*.env.backup
+*.env.production
+*.env.staging
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vspscc
+*.vssscc
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+logs/
+*.log.*
+
+# Testing
+coverage/
+.nyc_output/
+.nyc_output.json
+htmlcov/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Cache
+.cache/
+.eslintcache
+.vite/
+.parcel-cache/
+.webpack/
+.turbo/
+.metro-cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Desktop
+desktop/release/
+desktop/dist/
+desktop/out/
+desktop/*.log
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+
+# Misc
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+*.7z
+*.bak
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+*.orig
+*.rej
+*.log.*
+
+# Secrets & credentials
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+service-account*.json
+firebase-adminsdk*.json
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.backup
+
+# Docker
+docker-compose.override.yml
+.env.docker
+
+# Render / deployment
+render.yaml
+render.yml
+vercel.json
+.netlify
+.netlify/
+.vercel
+
+# Bun
+bun.lock
+bun.lockb
+
+# Electron
+electron-builder/
+electron/out/
+electron/dist/
+electron/release/

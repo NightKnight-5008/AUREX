@@ -1,0 +1,55 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="180" fill="url(#bgGradient)"/>
+  
+  <!-- AUREX Logo - Stylized "A" with financial chart element -->
+  <g transform="translate(512, 512)">
+    <!-- Main "A" shape -->
+    <path d="M -180 200 L 0 -200 L 180 200 L 120 200 L 0 -60 L -120 200 Z" 
+          fill="url(#accentGradient)" 
+          stroke="#ffffff" 
+          stroke-width="8"/>
+    
+    <!-- Horizontal bar of "A" -->
+    <rect x="-90" y="20" width="180" height="30" 
+          fill="#ffffff" 
+          rx="5"/>
+    
+    <!-- Financial chart line overlay -->
+    <g opacity="0.9">
+      <polyline points="-140,80 -80,40 -20,60 20,20 80,50 140,10" 
+                fill="none" 
+                stroke="#ffffff" 
+                stroke-width="12" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"/>
+      <!-- Chart points -->
+      <circle cx="-140" cy="80" r="8" fill="#ffffff"/>
+      <circle cx="-80" cy="40" r="8" fill="#ffffff"/>
+      <circle cx="-20" cy="60" r="8" fill="#ffffff"/>
+      <circle cx="20" cy="20" r="8" fill="#ffffff"/>
+      <circle cx="80" cy="50" r="8" fill="#ffffff"/>
+      <circle cx="140" cy="10" r="8" fill="#ffffff"/>
+    </g>
+  </g>
+  
+  <!-- Text "AUREX" at bottom -->
+  <text x="512" y="880" 
+        font-family="Arial, sans-serif" 
+        font-size="80" 
+        font-weight="bold" 
+        fill="#ffffff" 
+        text-anchor="middle">AUREX</text>
+</svg>
