@@ -1,28 +1,20 @@
-# Step 3: Convert to Desktop App with Electron
-
-This guide shows you how to convert AUREX into a standalone desktop application with a Windows installer (.exe setup file).
+# Desktop Application Guide (Electron)
 
 ## Overview
 
-We'll use Electron to wrap the React app as a desktop application, then create installers for Windows, macOS, and Linux.
+This guide shows how to convert AUREX into a standalone desktop application with a Windows installer (.exe setup file) using Electron.
 
 ---
 
 ## Part 1: Electron Setup
 
-### 1. Install Electron dependencies
+### 1. Install Electron Dependencies
 
 ```bash
 npm install --save-dev electron electron-builder concurrently wait-on cross-env
 ```
 
-### 2. Create Electron main process (`electron/main.js`)
-
-```bash
-mkdir electron
-```
-
-Create `electron/main.js`:
+### 2. Create Electron Main Process (electron/main.js)
 
 ```javascript
 const { app, BrowserWindow, Menu } = require('electron');
@@ -45,15 +37,13 @@ function createWindow() {
     icon: path.join(__dirname, '../public/icon.png'),
     title: 'AUREX - Financial Intelligence Platform',
     backgroundColor: '#000000',
-    show: false, // Don't show until ready
+    show: false,
   });
 
-  // Show window when ready to prevent flash
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
 
-  // Load app
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
@@ -61,86 +51,33 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
-  // Create application menu
   const menuTemplate = [
-    {
-      label: 'File',
-      submenu: [
-        {
-          label: 'Exit',
-          accelerator: 'CmdOrCtrl+Q',
-          click: () => app.quit()
-        }
-      ]
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
-        { type: 'separator' },
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectAll' }
-      ]
-    },
-    {
-      label: 'View',
-      submenu: [
-        { role: 'reload' },
-        { role: 'forceReload' },
-        { type: 'separator' },
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
-    },
-    {
-      label: 'Help',
-      submenu: [
-        {
-          label: 'About AUREX',
-          click: () => {
-            // Show about dialog
-          }
-        }
-      ]
-    }
+    { label: 'File', submenu: [{ label: 'Exit', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }] },
+    { label: 'Edit', submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
+    { label: 'View', submenu: [{ role: 'reload' }, { role: 'forceReload' }, { type: 'separator' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' }] },
+    { label: 'Help', submenu: [{ label: 'About AUREX' }] }
   ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
 
-  const menu = Menu.buildFromTemplate(menuTemplate);
-  Menu.setApplicationMenu(menu);
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
+  mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  if (process.platform !== 'darwin') app.quit();
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 ```
 
-### 3. Create preload script (`electron/preload.js`)
+### 3. Create Preload Script (electron/preload.js)
 
 ```javascript
 const { contextBridge } = require('electron');
 
-// Expose protected methods that allow the renderer process to use
-// ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electron', {
   platform: process.platform,
   versions: {
@@ -151,16 +88,13 @@ contextBridge.exposeInMainWorld('electron', {
 });
 ```
 
-### 4. Update `package.json`
-
-Add these scripts and configuration:
+### 4. Update package.json
 
 ```json
 {
   "name": "aurex",
   "version": "1.0.0",
   "description": "AUREX - Financial Intelligence Platform",
-  "author": "Your Name",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite --port 5173",
@@ -176,29 +110,10 @@ Add these scripts and configuration:
   "build": {
     "appId": "com.aurex.financial",
     "productName": "AUREX",
-    "copyright": "Copyright © 2025 ${author}",
-    "directories": {
-      "output": "release",
-      "buildResources": "build"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "public/complete-file-manifest.json",
-        "to": "complete-file-manifest.json"
-      }
-    ],
+    "directories": { "output": "release", "buildResources": "build" },
+    "files": ["dist/**/*", "electron/**/*", "package.json"],
     "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64", "ia32"]
-        }
-      ],
+      "target": [{ "target": "nsis", "arch": ["x64", "ia32"] }],
       "icon": "build/icon.ico",
       "artifactName": "AUREX-Setup-${version}.${ext}"
     },
@@ -207,38 +122,10 @@ Add these scripts and configuration:
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "AUREX",
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico",
-      "license": "LICENSE.txt"
+      "shortcutName": "AUREX"
     },
-    "mac": {
-      "target": ["dmg", "zip"],
-      "icon": "build/icon.icns",
-      "category": "public.app-category.finance",
-      "artifactName": "AUREX-${version}.${ext}"
-    },
-    "linux": {
-      "target": ["AppImage", "deb"],
-      "icon": "build/icon.png",
-      "category": "Finance",
-      "artifactName": "AUREX-${version}.${ext}"
-    },
-    "dmg": {
-      "contents": [
-        {
-          "x": 130,
-          "y": 220
-        },
-        {
-          "x": 410,
-          "y": 220,
-          "type": "link",
-          "path": "/Applications"
-        }
-      ]
-    }
+    "mac": { "target": ["dmg", "zip"], "icon": "build/icon.icns" },
+    "linux": { "target": ["AppImage", "deb"], "icon": "build/icon.png" }
   }
 }
 ```
@@ -247,18 +134,12 @@ Add these scripts and configuration:
 
 ## Part 2: Create App Icons
 
-### Windows Icon (.ico)
+Create icons in build/ directory:
+- build/icon.ico (Windows)
+- build/icon.icns (macOS)
+- build/icon.png (Linux)
 
-You need a 256x256 PNG icon. Convert it to .ico using:
-- Online: https://icoconvert.com/
-- Or use `electron-icon-builder` package
-
-Create icons in `build/` directory:
-- `build/icon.ico` (Windows)
-- `build/icon.icns` (macOS)
-- `build/icon.png` (Linux)
-
-### Quick icon setup:
+Quick icon setup:
 
 ```bash
 mkdir build
@@ -266,6 +147,7 @@ mkdir build
 ```
 
 For Windows .ico conversion:
+
 ```bash
 npm install --save-dev electron-icon-builder
 npx electron-icon-builder --input=./build/icon.png --output=./build --flatten
@@ -275,7 +157,7 @@ npx electron-icon-builder --input=./build/icon.png --output=./build --flatten
 
 ## Part 3: Update Vite Config for Electron
 
-Update `vite.config.ts`:
+Update vite.config.ts:
 
 ```typescript
 import { defineConfig } from 'vite';
@@ -285,16 +167,8 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   base: process.env.ELECTRON === 'true' ? './' : '/',
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    emptyOutDir: true,
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
+  build: { outDir: 'dist', assetsDir: 'assets', emptyOutDir: true },
+  resolve: { alias: { '@': path.resolve(__dirname, './src') } },
 });
 ```
 
@@ -321,7 +195,7 @@ This will:
 npm run electron:build:win
 ```
 
-Output: `release/AUREX-Setup-1.0.0.exe`
+Output: release/AUREX-Setup-1.0.0.exe
 
 #### Build for macOS (.dmg):
 
@@ -329,7 +203,7 @@ Output: `release/AUREX-Setup-1.0.0.exe`
 npm run electron:build:mac
 ```
 
-Output: `release/AUREX-1.0.0.dmg`
+Output: release/AUREX-1.0.0.dmg
 
 #### Build for Linux (.AppImage):
 
@@ -337,13 +211,7 @@ Output: `release/AUREX-1.0.0.dmg`
 npm run electron:build:linux
 ```
 
-Output: `release/AUREX-1.0.0.AppImage`
-
-#### Build for all platforms:
-
-```bash
-npm run dist
-```
+Output: release/AUREX-1.0.0.AppImage
 
 ---
 
@@ -351,71 +219,37 @@ npm run dist
 
 ### Auto Updates
 
-Install electron-updater:
-
 ```bash
 npm install electron-updater
 ```
 
-Update `electron/main.js`:
+Update electron/main.js:
 
 ```javascript
 const { autoUpdater } = require('electron-updater');
 
 app.whenReady().then(() => {
   createWindow();
-
-  // Check for updates
   autoUpdater.checkForUpdatesAndNotify();
 });
 
 autoUpdater.on('update-downloaded', () => {
-  // Notify user and restart
   dialog.showMessageBox({
     type: 'info',
     title: 'Update Ready',
     message: 'A new version has been downloaded. Restart to apply updates.',
     buttons: ['Restart', 'Later']
   }).then((result) => {
-    if (result.response === 0) {
-      autoUpdater.quitAndInstall();
-    }
+    if (result.response === 0) autoUpdater.quitAndInstall();
   });
 });
 ```
 
 ### Local Database (SQLite)
 
-For offline desktop app with local database:
-
 ```bash
 npm install better-sqlite3
 npm install --save-dev @types/better-sqlite3
-```
-
-Create `electron/database.js`:
-
-```javascript
-const Database = require('better-sqlite3');
-const path = require('path');
-const { app } = require('electron');
-
-const dbPath = path.join(app.getPath('userData'), 'aurex.db');
-const db = new Database(dbPath);
-
-// Initialize tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS company_cards (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    card_holder TEXT NOT NULL,
-    card_type TEXT NOT NULL,
-    bank TEXT NOT NULL,
-    credit_limit REAL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
-
-module.exports = db;
 ```
 
 ### System Tray Integration
@@ -427,12 +261,10 @@ let tray;
 
 function createTray() {
   tray = new Tray(path.join(__dirname, '../public/tray-icon.png'));
-
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show AUREX', click: () => mainWindow.show() },
     { label: 'Quit', click: () => app.quit() }
   ]);
-
   tray.setToolTip('AUREX Financial Platform');
   tray.setContextMenu(contextMenu);
 }
@@ -445,7 +277,7 @@ function createTray() {
 ### Windows Code Signing
 
 1. Get a code signing certificate (Sectigo, DigiCert, etc.)
-2. Add to `package.json`:
+2. Add to package.json:
 
 ```json
 "win": {
@@ -463,8 +295,7 @@ function createTray() {
   "identity": "Developer ID Application: Your Name (TEAM_ID)",
   "hardenedRuntime": true,
   "gatekeeperAssess": false,
-  "entitlements": "build/entitlements.mac.plist",
-  "entitlementsInherit": "build/entitlements.mac.plist"
+  "entitlements": "build/entitlements.mac.plist"
 }
 ```
 
@@ -474,11 +305,11 @@ function createTray() {
 
 ### Windows Testing
 
-1. Build: `npm run electron:build:win`
-2. Navigate to `release/` folder
-3. Run `AUREX-Setup-1.0.0.exe`
+1. Build: npm run electron:build:win
+2. Navigate to release/ folder
+3. Run AUREX-Setup-1.0.0.exe
 4. Follow installer wizard
-5. App will be installed to `C:\Users\{username}\AppData\Local\Programs\AUREX\`
+5. App will be installed to C:\Users\{username}\AppData\Local\Programs\AUREX\
 6. Desktop shortcut and Start Menu entry created
 
 ### Installer Features
@@ -495,35 +326,28 @@ The NSIS installer includes:
 ## Troubleshooting
 
 ### Issue: Blank white screen in production
-
-**Fix**: Check `base` path in vite.config.ts is set to `./`
+**Fix**: Check base path in vite.config.ts is set to ./
 
 ### Issue: Build fails on Windows
-
 **Fix**: Install Windows Build Tools:
 ```bash
 npm install --global windows-build-tools
 ```
 
 ### Issue: Icons not showing
-
-**Fix**: Ensure icon files exist in `build/` directory with correct names
+**Fix**: Ensure icon files exist in build/ directory with correct names
 
 ---
 
 ## Checklist
 
 - [ ] Electron dependencies installed
-- [ ] `electron/main.js` created
-- [ ] `electron/preload.js` created
-- [ ] Icons created in `build/` folder
-- [ ] `package.json` updated with electron scripts
-- [ ] Development mode tested (`npm run electron:dev`)
-- [ ] Windows build tested (`npm run electron:build:win`)
+- [ ] electron/main.js created
+- [ ] electron/preload.js created
+- [ ] Icons created in build/ folder
+- [ ] package.json updated with electron scripts
+- [ ] Development mode tested (npm run electron:dev)
+- [ ] Windows build tested (npm run electron:build:win)
 - [ ] Installer tested on Windows machine
 - [ ] Auto-updates configured (optional)
 - [ ] Code signing set up (optional)
-
----
-
-**Next**: Proceed to **DEPLOYMENT-GUIDE-04-WEB-DEPLOYMENT.md** for web hosting
